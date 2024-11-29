@@ -96,4 +96,4 @@ class BasePage:
 
     '''Нахождение нескольких элементов'''
     def find_until_all_elements_located(self, locator):
-        return WebDriverWait(self.driver, 20).until(EC.presence_of_all_elements_located(locator))
+        return WebDriverWait(self.driver, 30).until(EC.presence_of_all_elements_located(locator))

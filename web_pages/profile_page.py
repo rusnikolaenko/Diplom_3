@@ -1,11 +1,11 @@
 import allure
+from selenium.common import TimeoutException
+from selenium.webdriver.support.wait import WebDriverWait
 
 from data import Urls
 from web_pages.base_page import BasePage
 from web_locators.profile_locators import ProfileLocators as PL
 from web_locators.login_locators import LoginLocators as LL
-from conftest import test_data
-
 
 class ProfilePage(BasePage):
 
@@ -14,29 +14,29 @@ class ProfilePage(BasePage):
         self.find_element_visibility(PL.BUTTON_PROFILE)
         return self.check_exist_element(PL.BUTTON_PROFILE)
 
-    @allure.step('Открытие страницы "История заказов" с проверкой открытия')
+    @allure.step('Нажатие на кнопку "История заказов" с проверкой открытия')
     def open_history_page(self):
         self.find_element_visibility(PL.BUTTON_HISTORY)
-        button_history = self.find_element_visibility(PL.BUTTON_HISTORY)
-        self.driver.execute_script('arguments[0].click();', button_history)
+        self.click_element_if_clickable(PL.BUTTON_HISTORY)
         if self.get_url() == Urls.MAIN_PAGE + Urls.HISTORY_PAGE:
             return True
         else:
             return False
 
-    @allure.step("Проверка нахождение идентификатора заказа в истории")
-    def found_order_at_history(self, order_id):
-        elements = self.find_until_all_elements_located(PL.ORDERS_AT_HISTORY)
-
-        for element in elements:
-            if order_id == element.text:
-                return True
-        return True
+    @allure.step("Проверка нахождения идентификатора заказа в истории")
+    def found_order_at_history(self, order_id, timeout=20):
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: any(
+                    order_id in element.text for element in self.find_until_all_elements_located(PL.ORDERS_AT_HISTORY))
+            )
+            return True
+        except TimeoutException:
+            return False
 
     @allure.step('Нажатие кнопки "Выход" с проверкой выхода')
     def exit(self):
-        button_exit = self.find_element_visibility(PL.BUTTON_EXIT)
-        self.driver.execute_script('arguments[0].click();', button_exit)
+        self.click_element_if_clickable(PL.BUTTON_EXIT)
         self.find_element_not_visibility(PL.BUTTON_EXIT)
         if self.get_url() == Urls.MAIN_PAGE + Urls.LOGIN:
             return True
@@ -68,4 +68,8 @@ class ProfilePage(BasePage):
 
     def precondition_for_tests(self, test_data):
         self.authorization(test_data)
+        self.click_profile_page_button()
+
+    @allure.step('Нажатие на кнопку "Личный кабинет"')
+    def click_profile_page_button(self):
         self.click_element_if_clickable(PL.BUTTON_PROFILE_PAGE)
